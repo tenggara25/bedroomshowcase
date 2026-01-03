@@ -1,18 +1,20 @@
 import time
 from OpenGL.GL import *
 from OpenGL.GLUT import glutBitmapCharacter, GLUT_BITMAP_HELVETICA_18
+from src.entities.base import Entity
 
-class Clock:
+class Clock(Entity):
     """
     Jam digital sederhana:
     - Menggambar teks jam (HH:MM:SS) di atas meja.
     Catatan: Menggunakan GLUT bitmap font.
     """
     def __init__(self):
+        super().__init__("Clock")
         self.visible = True
 
-        # posisi di area meja (sesuaikan dengan Desk.pos)
-        self.pos = (2.0, 0.95, -1.0)
+        # posisi di atas nightstand/drawer
+        self.pos = (-1.2, 0.65, -2.5)
 
     def update(self, dt, ctx):
         pass

@@ -1,12 +1,18 @@
 from OpenGL.GL import *
 from OpenGL.GLUT import glutBitmapCharacter, GLUT_BITMAP_8_BY_13
+from src.entities.base import Entity
 
-class HUD:
+class HUD(Entity):
     def __init__(self):
+        super().__init__("HUD")
         self.visible = True
+        self.fps = 0.0
 
     def toggle(self):
         self.visible = not self.visible
+
+    def set_fps(self, fps):
+        self.fps = fps
 
     def update(self, dt, ctx):
         pass
@@ -29,17 +35,22 @@ class HUD:
 
         lines = [
             "3D Bedroom Showcase",
-            f"Mode: {mode} | AutoTour: {auto} | Focus: {focus}",
+            f"FPS: {self.fps:.1f} | Mode: {mode} | AutoTour: {auto}",
+            f"Focus: {focus}",
             "",
-            "H  : Toggle HUD",
-            "N  : Day / Night",
-            "T  : Auto Tour",
-            "1  : Focus Bed",
-            "2  : Focus Desk",
-            "3  : Focus Drawer",
-            "0  : Clear Focus",
-            "O  : Open Drawer",
-            "L  : Lighting ON/OFF",
+            "[VIEW]",
+            "H: Toggle HUD    T: Auto Tour",
+            "N: Day/Night     L: Lighting",
+            "",
+            "[FOCUS] 1:Bed 2:Desk 3:Nightstand",
+            "        4:Bookshelf 5:Wardrobe 6:Plant",
+            "        0:Clear Focus",
+            "",
+            "[INTERACT]",
+            "O: Drawer    P: Door    K: Wardrobe",
+            "M: Desk Lamp F: Ceiling Fan",
+            "",
+            "[MOVE] WASD (AutoTour OFF)",
             "ESC: Exit",
         ]
 
@@ -57,20 +68,20 @@ class HUD:
         glPushMatrix()
         glLoadIdentity()
 
-        glColor4f(0, 0, 0, 0.6)
+        glColor4f(0, 0, 0, 0.7)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        x, y = 10, h - 180
+        x, y = 10, h - 280
         glBegin(GL_QUADS)
         glVertex2f(x, y)
-        glVertex2f(x+520, y)
-        glVertex2f(x+520, y+170)
-        glVertex2f(x, y+170)
+        glVertex2f(x+320, y)
+        glVertex2f(x+320, y+270)
+        glVertex2f(x, y+270)
         glEnd()
 
         glColor3f(1, 1, 1)
-        ty = y + 150
+        ty = y + 252
         for i, line in enumerate(lines):
             glRasterPos2f(x+10, ty - i*14)
             for ch in line:

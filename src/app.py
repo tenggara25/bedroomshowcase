@@ -1,5 +1,15 @@
 from OpenGL.GLUT import *
 from OpenGL.GL import glViewport
+import sys
+import ctypes
+from OpenGL.raw.GLUT import (
+    glutDisplayFunc as raw_glutDisplayFunc,
+    glutIdleFunc as raw_glutIdleFunc,
+    glutReshapeFunc as raw_glutReshapeFunc,
+    glutKeyboardFunc as raw_glutKeyboardFunc,
+    glutKeyboardUpFunc as raw_glutKeyboardUpFunc,
+    glutPassiveMotionFunc as raw_glutPassiveMotionFunc,
+)
 
 from src import config
 from src.time import Time
@@ -35,7 +45,7 @@ class Application:
         self._last_mouse_y = None
 
     def run(self):
-        glutInit()
+        glutInit(sys.argv)
         glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH)
         glutInitWindowSize(config.WIN_WIDTH, config.WIN_HEIGHT)
         glutCreateWindow(config.APP_TITLE.encode("utf-8"))
@@ -43,12 +53,33 @@ class Application:
         self.renderer.init_gl()
         self.renderer.set_projection(config.WIN_WIDTH, config.WIN_HEIGHT)
 
-        glutDisplayFunc(self._display)
-        glutIdleFunc(self._idle)
-        glutReshapeFunc(self._reshape)
-        glutKeyboardFunc(self._key_down)
-        glutKeyboardUpFunc(self._key_up)
-        glutPassiveMotionFunc(self._mouse_move)
+        # Use raw GLUT bindings with CFUNCTYPE wrappers to avoid
+        # PyOpenGL contextdata issues when registering callbacks.
+        self._cb_display = ctypes.CFUNCTYPE(None)(lambda: self._display())
+        raw_glutDisplayFunc(self._cb_display)
+
+        self._cb_idle = ctypes.CFUNCTYPE(None)(lambda: self._idle())
+        raw_glutIdleFunc(self._cb_idle)
+
+        self._cb_reshape = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_int)(
+            lambda w, h: self._reshape(int(w), int(h))
+        )
+        raw_glutReshapeFunc(self._cb_reshape)
+
+        self._cb_key_down = ctypes.CFUNCTYPE(None, ctypes.c_ubyte, ctypes.c_int, ctypes.c_int)(
+            lambda key, x, y: self._key_down(bytes([key]), int(x), int(y))
+        )
+        raw_glutKeyboardFunc(self._cb_key_down)
+
+        self._cb_key_up = ctypes.CFUNCTYPE(None, ctypes.c_ubyte, ctypes.c_int, ctypes.c_int)(
+            lambda key, x, y: self._key_up(bytes([key]), int(x), int(y))
+        )
+        raw_glutKeyboardUpFunc(self._cb_key_up)
+
+        self._cb_passive = ctypes.CFUNCTYPE(None, ctypes.c_int, ctypes.c_int)(
+            lambda x, y: self._mouse_move(int(x), int(y))
+        )
+        raw_glutPassiveMotionFunc(self._cb_passive)
 
         glutMainLoop()
 
@@ -106,18 +137,6 @@ class Application:
         dt = self.time.tick()
         self._update_camera_controls(dt)
 
-        self.renderer.begin_frame(self.lighting)   # <-- sebelumnya begin_frame()        self.lighting.apply()
-        self.lighting.apply()
-        self.renderer.apply_camera(self.camera, dt)
-
-        self.scene.update(dt)
-        self.scene.draw()
-
-        glutSwapBuffers()
-    def _display(self):
-        dt = self.time.tick()
-        self._update_camera_controls(dt)
-
         self.renderer.begin_frame(self.lighting)
         self.lighting.apply()
         self.renderer.apply_camera(self.camera, dt)
@@ -126,6 +145,7 @@ class Application:
         self.scene.draw()
 
         if hasattr(self.scene, "hud"):
+            self.scene.hud.set_fps(self.time.fps)
             self.scene.hud.draw_2d(self.ctx, self.win_w, self.win_h)
 
         glutSwapBuffers()

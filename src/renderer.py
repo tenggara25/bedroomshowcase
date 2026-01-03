@@ -1,5 +1,6 @@
 from OpenGL.GL import *
 from OpenGL.GLU import *
+import math
 
 class Renderer:
     def __init__(self):
@@ -7,6 +8,11 @@ class Renderer:
         self.focus_target = None
         self.focus_name = None
         self._t = 0.0
+        
+        # Smooth camera transition
+        self._cam_pos = [0.0, 1.8, 2.8]  # Current interpolated position
+        self._cam_look = [0.0, 1.2, 0.0]  # Current interpolated look-at
+        self._transition_speed = 2.5  # Kecepatan transisi
 
     def init_gl(self):
         glEnable(GL_DEPTH_TEST)
@@ -39,19 +45,68 @@ class Renderer:
         self.focus_target = None
         self.focus_name = None
 
+    def _lerp(self, a, b, t):
+        """Linear interpolation"""
+        return a + (b - a) * min(1.0, t)
+
+    def _lerp_vec(self, current, target, t):
+        """Lerp untuk vector 3D"""
+        return [
+            self._lerp(current[0], target[0], t),
+            self._lerp(current[1], target[1], t),
+            self._lerp(current[2], target[2], t),
+        ]
+
     def apply_camera(self, cam, dt):
-        import math
+        t = self._transition_speed * dt
+        
         if self.focus_target:
-            gluLookAt(cam.x, cam.y, cam.z,
-                      *self.focus_target, 0,1,0)
+            # Target: kamera tetap, lihat ke focus_target
+            target_pos = [cam.x, cam.y, cam.z]
+            target_look = list(self.focus_target)
+            
+            self._cam_pos = self._lerp_vec(self._cam_pos, target_pos, t)
+            self._cam_look = self._lerp_vec(self._cam_look, target_look, t)
+            
+            gluLookAt(
+                self._cam_pos[0], self._cam_pos[1], self._cam_pos[2],
+                self._cam_look[0], self._cam_look[1], self._cam_look[2],
+                0, 1, 0
+            )
             return
 
         if self.auto_tour:
             self._t += dt
             r = 2.8
-            cam.x = math.cos(self._t*0.4)*r
-            cam.z = math.sin(self._t*0.4)*r
-            cam.y = 1.8
-            gluLookAt(cam.x, cam.y, cam.z, 0,1.2,0, 0,1,0)
+            target_x = math.cos(self._t * 0.4) * r
+            target_z = math.sin(self._t * 0.4) * r
+            target_y = 1.8
+            
+            target_pos = [target_x, target_y, target_z]
+            target_look = [0.0, 1.2, 0.0]
+            
+            # Smooth transition
+            self._cam_pos = self._lerp_vec(self._cam_pos, target_pos, t * 2)
+            self._cam_look = self._lerp_vec(self._cam_look, target_look, t * 2)
+            
+            cam.x, cam.y, cam.z = self._cam_pos
+            
+            gluLookAt(
+                self._cam_pos[0], self._cam_pos[1], self._cam_pos[2],
+                self._cam_look[0], self._cam_look[1], self._cam_look[2],
+                0, 1, 0
+            )
         else:
-            gluLookAt(*cam.look_at_args())
+            # Manual camera control dengan smooth transition
+            args = cam.look_at_args()
+            target_pos = [args[0], args[1], args[2]]
+            target_look = [args[3], args[4], args[5]]
+            
+            self._cam_pos = self._lerp_vec(self._cam_pos, target_pos, t * 4)
+            self._cam_look = self._lerp_vec(self._cam_look, target_look, t * 4)
+            
+            gluLookAt(
+                self._cam_pos[0], self._cam_pos[1], self._cam_pos[2],
+                self._cam_look[0], self._cam_look[1], self._cam_look[2],
+                0, 1, 0
+            )

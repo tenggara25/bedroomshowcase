@@ -10,9 +10,3 @@ CAM_YAW = -90.0
 CAM_PITCH = -10.0
 CAM_SPEED = 3.0
 CAM_SENS = 0.12
-
-# Lighting
-AMBIENT = (0.25, 0.25, 0.25, 1.0)
-DIFFUSE = (0.85, 0.85, 0.85, 1.0)
-SPECULAR = (0.90, 0.90, 0.90, 1.0)
-LIGHT_POS = (0.0, 2.6, 0.0, 1.0)

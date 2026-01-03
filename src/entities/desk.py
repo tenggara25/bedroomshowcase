@@ -1,12 +1,15 @@
 from OpenGL.GL import *
 from src.geometry.primitives import draw_cube
+from src.entities.base import Entity
 
-class Desk:
+class Desk(Entity):
     def __init__(self):
+        super().__init__("Desk")
         self.visible = True
-        self.pos = (2.0, 0.0, -1.2)
-        self.top_w, self.top_h, self.top_d = 1.8, 0.10, 0.75
-        self.leg_w, self.leg_h, self.leg_d = 0.10, 0.75, 0.10
+        # Posisi desk: sisi kanan kamar, menghadap dinding
+        self.pos = (3.2, 0.0, -2.0)
+        self.top_w, self.top_h, self.top_d = 1.4, 0.08, 0.65
+        self.leg_w, self.leg_h, self.leg_d = 0.08, 0.72, 0.08
 
     def update(self, dt, ctx):
         pass

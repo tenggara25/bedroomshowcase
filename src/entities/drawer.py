@@ -1,13 +1,16 @@
 from OpenGL.GL import *
 from src.geometry.primitives import draw_cube
+from src.entities.base import Entity
 
-class Drawer:
+class Drawer(Entity):
     def __init__(self):
+        super().__init__("Drawer")
         self.visible = True
-        self.pos = (2.6, 0.0, -2.6)
+        # Posisi drawer: nightstand di samping bed
+        self.pos = (-1.2, 0.0, -2.5)
 
-        self.body_w, self.body_h, self.body_d = 0.9, 1.0, 0.5
-        self.door_w, self.door_h, self.door_d = 0.88, 0.95, 0.04
+        self.body_w, self.body_h, self.body_d = 0.5, 0.6, 0.45
+        self.door_w, self.door_h, self.door_d = 0.48, 0.55, 0.03
 
         self.is_open = False
         self.angle = 0.0
